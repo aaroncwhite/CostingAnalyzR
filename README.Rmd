@@ -1,0 +1,15 @@
+---
+title: "README"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Costing Analyzer
+An application for analyzing data collected from five facilities during a Time Driven, Activity Based Costing (TDABC) study in the Central Plateau of Haiti.  The published results of the study can be found at [PubMed](https://www.ncbi.nlm.nih.gov/pubmed/28588971).  
+
+The application allows for dynamic filtering and analysis of results based on user preferences.  The hosted application can be found [here](https://htdata.pih-emr.org/shiny/).
+
+
