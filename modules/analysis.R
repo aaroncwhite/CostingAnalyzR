@@ -2,7 +2,7 @@ library(ggplot2)
 library(reshape2)
 
 ## Analysis Functions ----------------------------------------------------------
-topDiagsSite <- function(df, n=10) {
+topDiagsSite <- function(df,site_column='facility', n=10) {
   # perform all of the same calculations as topDiags, but this time for each site
   # in the data set.  returns a nested list of topDiags options based on filtered 
   # data for each
@@ -16,11 +16,10 @@ topDiagsSite <- function(df, n=10) {
   all <- list(topDiags(df, number= n,  paste("Top",n,"Diagnoses - All Sites")))
   names(all) <- 'all'
   diags <- all
-  sites <- unique(df$facility)
+  sites <- unique(df[,site_column])
   
   for (s in sites[!is.na(sites)]) {
-    d <-
-      list(topDiags(df[df$facility == s,], number= n, paste("Top",n,"Diagnoses -",s)))
+    d <- list(topDiags(df[df$facility == s,], number= n, paste("Top",n,"Diagnoses -",s)))
     names(d) <- s
     diags <- append(diags, d)
   }
@@ -38,16 +37,13 @@ topDiags <- function(df, number = 10, title=NULL) {
   
   
   # make a cross tab of diagnosis by sex
-  overallDiags <-
-    as.data.frame(table(df$diagnosis, as.character(df$sex))) 
+  overallDiags <- as.data.frame(table(df$diagnosis, as.character(df$sex))) 
   # this will make it look normal with two columns M and F and rows of diagnosis
   overallDiags <- dcast(overallDiags, Var1 ~ Var2, value.var = 'Freq')
   # add a total column 
-  overallDiags <-
-    cbind(overallDiags, 'Total' = rowSums(overallDiags[,-1])) # -1 to leave out diagnosis column
+  overallDiags <- cbind(overallDiags, 'Total' = rowSums(overallDiags[,-1])) # -1 to leave out diagnosis column
   # order by most frequent first
-  overallDiags <-
-    overallDiags[order(overallDiags$Total, decreasing = TRUE),]
+  overallDiags <- overallDiags[order(overallDiags$Total, decreasing = TRUE),]
   # take the total of the remaining diagnoses that are not in the top N stated with number parameter
   others <- c(paste0('Remaining Diagnoses (',nrow(overallDiags[(number + 1):nrow(overallDiags),]),")"),
                   rbind(colSums(overallDiags[(number + 1):nrow(overallDiags),-1]))

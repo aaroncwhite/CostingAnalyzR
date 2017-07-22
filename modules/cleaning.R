@@ -347,16 +347,16 @@ cleanTimes <- function(df) {
   return(df)
 }
 
-calcQuantities <- function(df, columns, col_name) {
+calcQuantities <- function(df, cols, col_name) {
   # Count the number of non NA cells in a set of columns 
   # adds a new column name as defined by col_name with the count
   
   # When we import, R thinks blank cells are "", overwrite them as NA
   # overwrite blank cells with NA for all of the above listed columns
-  df[,columns][df[,columns] ==""] <- NA
+  df[,cols][df[,cols] ==""] <- NA
   
   # count the number of tests and rxs by row and add new count columns
-  df[[col_name]] <- apply(df[,columns], 1, function(a) length(a[!is.na(a)])) # 1 does by row and counts only nonNA values
+  df[[col_name]] <- apply(df[,cols], 1, function(a) length(a[!is.na(a)])) # 1 does by row and counts only nonNA values
   
   return(df)
 }
