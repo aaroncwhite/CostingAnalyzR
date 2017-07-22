@@ -5,21 +5,26 @@ The application allows for dynamic filtering and analysis of results based on us
 
 # Functionality
 * [Cleaning Data](#cleaning-data)
-** [Import the data](#import-the-data)
-** [Standardize Columns](#standardize-column-names)
-** [Standardize Data Values](#standardize-data-values)
-*** [Dates](#standardize-dates)
-*** [Facility Names](#standardize-facility-names)
-*** [Ages and Sex](#clean-ages-and-sex)
-*** [Times](#standardize-times)
-*** [Count labs and prescriptions](#count-labs-and-prescriptions)
-*** [Text Values](#standardize-text-fields)
-** [The Easier Way](#the-easier-way)
+ * [Import the data](#import-the-data)
+ * [Standardize Columns](#standardize-column-names)
+ * [Standardize Data Values](#standardize-data-values)
+  * [Dates](#standardize-dates)
+  * [Facility Names](#standardize-facility-names)
+  * [Ages and Sex](#clean-ages-and-sex)
+  * [Times](#standardize-times)
+  * [Count labs and prescriptions](#count-labs-and-prescriptions)
+  * [Text Values](#standardize-text-fields)
+ * [The Easier Way](#the-easier-way)
 * [Analysis](#analysis) 
 * [Dynamic Visualizations](#dynamic-visualizations)
 
 ## Cleaning Data Steps
 A core component of the application is to import at clean raw data collected at the facilities.  During the data collection phase, data clerks at each facility collected information about patients visiting.  Patients were asked to report the amount of time they had spent traveling to the facility.  Additionally, the data clerk captured the time of arrival, start time of consultation time with a clinician, time of consultation completion, and visit information about prescriptions, lab tests ordered, and diagnoses.  
+
+First, make sure you have all of the supporting functions loaded.
+```{r}
+source('modules/cleaning.R')
+```
 
 #### Importing the data
 Assuming there's a new dataset to import and clean, let's go through the process of what happens to that raw input file.  First, let's import the *example_source.xlsx* file. I'm using the *openxlsx* library to do this.  Some of the older code still relies on *XLConnect*.  I have found *openxlsx* to be more flexible and easy to use recently and have started to refactor older code using this library. 
@@ -99,12 +104,12 @@ partially_clean %<>% cleanTimes()
 ```
 
 #### Count labs and prescriptions
-We wanted some aggregate counts of how many labs and prescriptions were given on a per visit basis.  *calcQuantities()* can be used to count all NA values in a set of *columns* and then creates a new *col_name* in the dataframe. Remember, the dataframe is the implicit first argument for the function when using the compound assignment pipe. 
+We wanted some aggregate counts of how many labs and prescriptions were given on a per visit basis.  *calcQuantities()* can be used to count all NA values in a set of *cols* (columns to modify) and then creates a new *col_name* in the dataframe. Remember, the dataframe is the implicit first argument for the function when using the compound assignment pipe. 
 ```{r}
 labs <- c('lab1', 'lab2', 'lab3', 'lab4', 'lab5')
 rx <- c('rx1', 'rx2', 'rx3', 'rx4', 'rx5')
 
-df %<>% calcQuantities(tests, 'num_tests')
+df %<>% calcQuantities(labs, 'num_tests')
 df %<>% calcQuantities(rx, 'num_rx')
 
 ```
