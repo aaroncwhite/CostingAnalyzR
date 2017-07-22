@@ -1,7 +1,12 @@
 # Global Variables
+library(shiny)
+library(shinyFiles)
+library(DT)
+
+
 
 # Load any helper functionality stored in the modules folder
-mods <- paste0('modules/', list.files('modules/'))
+mods <- list.files('modules/', full.names = T)
 sapply(mods, function(x) source(x))
 
 # connect the database.  Library is loaded in helpers.R
