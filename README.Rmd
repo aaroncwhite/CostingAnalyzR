@@ -1,15 +1,177 @@
----
-title: "README"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## Costing Analyzer
+# Costing Analyzer
 An application for analyzing data collected from five facilities during a Time Driven, Activity Based Costing (TDABC) study in the Central Plateau of Haiti.  The published results of the study can be found at [PubMed](https://www.ncbi.nlm.nih.gov/pubmed/28588971).  
 
 The application allows for dynamic filtering and analysis of results based on user preferences.  The hosted application can be found [here](https://htdata.pih-emr.org/shiny/).
+
+# Functionality
+* [Cleaning Data](#cleaning-data)
+** [Import the data](#import-the-data)
+** [Standardize Columns](#standardize-column-names)
+** [Standardize Data Values](#standardize-data-values)
+*** [Dates](#standardize-dates)
+*** [Facility Names](#standardize-facility-names)
+*** [Ages and Sex](#clean-ages-and-sex)
+*** [Times](#standardize-times)
+*** [Count labs and prescriptions](#count-labs-and-prescriptions)
+*** [Text Values](#standardize-text-fields)
+** [The Easier Way](#the-easier-way)
+* [Analysis](#analysis) 
+* [Dynamic Visualizations](#dynamic-visualizations)
+
+## Cleaning Data Steps
+A core component of the application is to import at clean raw data collected at the facilities.  During the data collection phase, data clerks at each facility collected information about patients visiting.  Patients were asked to report the amount of time they had spent traveling to the facility.  Additionally, the data clerk captured the time of arrival, start time of consultation time with a clinician, time of consultation completion, and visit information about prescriptions, lab tests ordered, and diagnoses.  
+
+#### Importing the data
+Assuming there's a new dataset to import and clean, let's go through the process of what happens to that raw input file.  First, let's import the *example_source.xlsx* file. I'm using the *openxlsx* library to do this.  Some of the older code still relies on *XLConnect*.  I have found *openxlsx* to be more flexible and easy to use recently and have started to refactor older code using this library. 
+
+```{r}
+library(openxlsx)
+raw_data <- readWorkbook('example_files/example_source.xlsx')
+head(raw_data)
+```
+
+#### Standardize column names
+If you're running this code block in RStudio, you should see the raw data file in all of it's messy glory.  Column names are inconsistent, numeric fields have text, and plenty of typos in the text fields themselves. To try to keep the pain of cleaning this to a minimum, we started developing a dictionary to map common mistakes we found.  The first dictionary used relates to the column names. 
+```{r}
+columns <- readWorkbook('example_files/example_columns.xlsx')
+head(columns)
+```
+The columns dictionary consists of two columns- "original" and "replace".  Each row has a key/value pair which is used to standardize the input file.  As you can see on row 2 of the example file, "Code.du.Patient" will be renamed to "pt_code".  Anything with a NULL value or that does not exist in the replace column ends up being dropped after import.  Some of the key columns that immediately are dropped include the patient's first and last name as well as the clinician name.  The process of doing this has been wrapped into the *cleanColumns()* function.  It will search and replace column names, drop the other columns, and do a double check to make sure all of the columns we really want are still there.  If that test fails, the cleaning process is stopped.  
+```{r}
+partially_clean <- cleanColumns(raw_data, columns)
+```
+
+#### Standardize data values
+The project relied on data clerks stationed at each facility to collect data.  We encountered several issues from misspelled names, time entries such as "9:31 AM" (string format) next to "9:31", ages where some were defined in months and some in years, etc.  We developed several standardization utilities to attempt to clean the data while preserving as much as possible. If we were intending to continue this project for a long amount of time (total data collection lasted around six months, and we developed this tool in the second half of collection). 
+
+**Note on piping**
+The following code chunks use piping operators from the *maggritr* library.  More information can be found at the [RStudio Blog](https://blog.rstudio.com/2014/12/01/magrittr-1-5/).  Here's a quick example of the *%<>%* (compound assignment) that you'll see, which modifies an object in place.  Each of the cleaning functions takes the entire dataframe, does its cleaning procedures, and then returns the full dataframe again. 
+```{r}
+example <- 1:20
+# one-way pipe runs but does not modify start object
+example %>% head() %>% print()
+print(example)
+
+# two-way, compound assignment, modifies the existing object in place
+example %<>% head()
+print(example)
+```
+
+
+#### Standardize dates
+Data collectors have a tough job as they're trying to enter data quickly for patients coming through the door.  We encountered some issues with different date formats used.  Some collectors wrote a two digit year, some used a month/day/year format while others used day/month/year, etc.  We needed to clean up those dates to have a good data set for analysis.  The library *lubridate* has a function called *parse_date_time()*, which attempts to guess what format each date is in and return a standardized date format.  We know that data collection only happened between March 2015 and October 2015, so *start_date* and *end_date* parameters can also be declared.  This is useful because sometimes while guessing the proper format, we could guess wrong.  For example, a date entered as 1/6/2015 could either be January 6, 2015 or it could be June 1, 2015.  These bounds help catch those mistakes.  The *start_date* and *end_date* parameters default to '2015-03-01' and '2015-10-31' respectively. 
+
+Additionally, we wanted to create groupings on month and week, so we added two new columns to ease that grouping during analysis.  All of this has been wrapped into the function *cleanDates()*.  It takes two parameters, the dataframe to clean, and the formats to guess.  It will default to checking for 'mdy', 'dm', and 'dmy', but you can declare different formats if desired. 
+```{r}
+# Some examples:
+# Use all default parameters
+partially_clean %>% cleanDates() %>% .$month %>% table()
+# Is the same as:
+partially_clean %>% cleanDates(formats=c('mdy', 'dm', 'dmy')) %>% .$month %>% table()
+partially_clean %>% cleanDates(start_date='2015-03-01', end_date='2015-10-31') %>% .$month %>% table()
+
+# Do it for real now with all of the defaults
+partially_clean %<>% cleanDates()
+table(partially_clean$month)
+```
+If any dates managed to make it past that cleaning but are outside of the bounds, we leave them in.  They are filtered out later in the analysis steps.  
+
+#### Standardize facility names
+We encountered several issues with typos in facility names.  Since the field was free-text, it was very easy to enter misspelled facility names.  Other data clerks were more specific about the wards within the hospital where they collected data.  Instead of creating a direct mapping file for this, we used a [levenschtein distance algorithm](https://people.cs.pitt.edu/~kirk/cs1501/Pruhs/Spring2006/assignments/editdistance/Levenshtein%20Distance.htm) to calculate similarity between our desired facility names and those originally entered.  After examining the source data, we also decided that any missing location names would be standardized to Lacolline because we collected a large mount of data there and the data clerk at that facility was particularly consistent in *not* entering facility names.  This processes is wrapped into **cleanFacility()*, which does the steps listed above and provides a cross-tab result to compare.  The rows are the original names entered and the columns are the names we standardized. 
+```{r}
+partially_clean %<>% cleanFacility()
+```
+
+#### Clean Ages and Sex
+The *cleanDemographics()* function handes cleaning ages and sex values.  Some ages were entered as month values such as "11 mois" or "6m", and sometimes we found missing values for the sex column.  The *cleanNumeric()* function looks at each value and attempts to find a specific search term ("m" for example) and then reduces by a certain factor (12 for months) to convert all values to years. 
+
+Additionally, because of missing values for sex, *cleanDemographics()* imputes values based on a declared set of column names.  The default is to use the intersection of sex, facility name and diagnosis to impute the missing values.  Whichever sex is the most common based on that specific combination of values is used to overwrite any missing values. 
+```{r}
+partially_clean %<>% cleanDemographics()
+# alternate impute columns declared:
+# partially_clean %<>% cleanDemographics(impute_columns=c('facility', 'diagnosis', 'rx1')
+```
+
+#### Standardize Times
+Next, we need to calculate the time between arrival to seeing a clinician and the total time while seen by a clinician.  The data clerks collected the actual times when someone arrived, entered the consultation room, and left the consultation room, so we can do the math to find out that length of time.  Some values also were entered in a non standard format for travel times. *cleanTimes()* calcluates the time differences and adds two new columns called *wait_time* and *consult_time*.  It also cleans out things like "hours" or "minutes" from the arrival_time column and produces a new column called *travel_time*. 
+```{r}
+partially_clean %<>% cleanTimes()
+```
+
+#### Count labs and prescriptions
+We wanted some aggregate counts of how many labs and prescriptions were given on a per visit basis.  *calcQuantities()* can be used to count all NA values in a set of *columns* and then creates a new *col_name* in the dataframe. Remember, the dataframe is the implicit first argument for the function when using the compound assignment pipe. 
+```{r}
+labs <- c('lab1', 'lab2', 'lab3', 'lab4', 'lab5')
+rx <- c('rx1', 'rx2', 'rx3', 'rx4', 'rx5')
+
+df %<>% calcQuantities(tests, 'num_tests')
+df %<>% calcQuantities(rx, 'num_rx')
+
+```
+
+#### Standardize Text Fields
+Diagnoses, labs ordered, and prescriptions all were free text, which required standardization.  We used a similar definitions process that was used for column names, except this time it was used on the values.  The definition table has two columns, "original" and "replace".  The function *cleanCharacter()* can be used to declare what columns to modify and what definition table to use.  It will work for either one column or as many as you want to name.  Just make sure they all exist in the dataframe you're modifying!  First, make sure you have the definition files imported properly. 
+```{r}
+tests <- readWorkbook('example_files/example_definitions.xlsx', 'test')
+prescriptions <- readWorkbook('example_files/example_definitions.xlsx', 'prescription')
+diagnoses <- readWorkbook('example_files/example_definitions.xlsx', 'diagnosis')
+
+```
+
+Next, we'll use those same column name vectors we just made from above to standardize the labs and prescriptions.  We'll also standardize the *diagnosis* column while we're at it. 
+```{r}
+df %<>% cleanCharacter(labs, tests)
+df %<>% cleanCharacter(rx, prescriptions)
+df %<>% cleanCharacter('diagnosis', diagnoses)
+
+```
+
+#### The easier way
+All of the cleaning and processing functions have been wrapped into the *cleanData()* function.  Pass the raw data set along with the definition tables for columns, tests, prescriptions, and diagnoses, and it will complete the entire cleaning process described above. 
+```{r}
+raw_data <- readWorkbook('example_files/example_source.xlsx')
+columns <- readWorkbook('example_files/example_columns.xlsx')
+tests <- readWorkbook('example_files/example_definitions.xlsx', 'test')
+prescriptions <- readWorkbook('example_files/example_definitions.xlsx', 'prescription')
+diagnoses <- readWorkbook('example_files/example_definitions.xlsx', 'diagnosis')
+
+clean_data <- cleanData(raw_data, columns, tests, prescriptions, diagnoses)
+```
+That's it for cleaning!
+
+### Analysis
+
+
+### Dynamic Visualizations
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
