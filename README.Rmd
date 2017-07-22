@@ -3,6 +3,8 @@ An application for analyzing data collected from five facilities during a Time D
 
 The application allows for dynamic filtering and analysis of results based on user preferences.  The hosted application can be found [here](https://htdata.pih-emr.org/shiny/).
 
+**NOTE** This is an RMarkdown Notebook.  If opened within RStudio, you can run code chunks by pressing *Ctrl+Shift+Enter*.  Results will be rendered below each code chunck as well as in the console. 
+
 # Functionality
 * [Cleaning Data](#cleaning-data)
   * [Import the data](#import-the-data)
@@ -16,6 +18,12 @@ The application allows for dynamic filtering and analysis of results based on us
     * [Text Values](#standardize-text-fields)
   * [The Easier Way](#the-easier-way)
 * [Analysis](#analysis) 
+  * [Summary Top Diagnoses](#summary-top-diagnoses)
+  * [Patient Visits](#patient-visits)
+  * [Patient Sex Breakdown](#patient-sex-breakdown)
+  * [Density Plots](#density-plots)
+  * [Top Prescriptions and Labs](#top-prescriptions-and-labs)
+  * [Average Labs and Prescriptions](#average-labs-and-prescriptions)
 * [Dynamic Visualizations](#dynamic-visualizations)
 
 ## Cleaning Data Steps 
@@ -56,7 +64,7 @@ partially_clean <- cleanColumns(raw_data, columns)
 The project relied on data clerks stationed at each facility to collect data.  We encountered several issues from misspelled names, time entries such as "9:31 AM" (string format) next to "9:31", ages where some were defined in months and some in years, etc.  We developed several standardization utilities to attempt to clean the data while preserving as much as possible. If we were intending to continue this project for a long amount of time (total data collection lasted around six months, and we developed this tool in the second half of collection). 
 
 **Note on piping**
-The following code chunks use piping operators from the *maggritr* library.  More information can be found at the [RStudio Blog](https://blog.rstudio.com/2014/12/01/magrittr-1-5/).  Here's a quick example of the *%<>%* (compound assignment) that you'll see, which modifies an object in place.  Each of the cleaning functions takes the entire dataframe, does its cleaning procedures, and then returns the full dataframe again. 
+The following code chunks use piping operators from the *magrittr* library.  More information can be found at the [RStudio Blog](https://blog.rstudio.com/2014/12/01/magrittr-1-5/).  Here's a quick example of the *%<>%* (compound assignment) that you'll see, which modifies an object in place.  Each of the cleaning functions takes the entire dataframe, does its cleaning procedures, and then returns the full dataframe again. 
 ```{r}
 example <- 1:20
 # one-way pipe runs but does not modify start object
@@ -166,10 +174,23 @@ That's it for cleaning!
 ## Analysis
 ([back to top](#costing-analyzer))
 
-### Top Diagnoses
+### Summary Top Diagnoses
+([back to top](#costing-analyzer))
 
+### Patient Visits
+([back to top](#costing-analyzer))
 
+### Patient Sex Breakdown
+([back to top](#costing-analyzer))
 
+### Density Plots
+([back to top](#costing-analyzer))
+
+### Top Prescriptions and Labs
+([back to top](#costing-analyzer))
+
+### Average Labs and Prescriptions
+([back to top](#costing-analyzer))
 
 
 
