@@ -1,17 +1,5 @@
-options(java.parameters = "-Xmx4g" ) # this is only necessary when importing the Excel workbook. 
-library(XLConnect)
-library(sqldf)
 library(ggplot2)
 library(reshape2)
-library(lubridate)
-library(magrittr)
-library(table1xls)
-library(plyr)
-library(shiny)
-library(DT)
-library(shinyFiles)
-
-
 
 ## Analysis Functions ----------------------------------------------------------
 topDiagsSite <- function(df, n=10) {
