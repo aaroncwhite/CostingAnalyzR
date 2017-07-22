@@ -8,3 +8,4 @@ ggplot
 shiny
 shinyFiles
 DT
+RSQLite
