@@ -1,0 +1,10 @@
+lubridate
+magrittr
+plyr
+openxlsx
+XLConnect
+table1xls
+ggplot
+shiny
+shinyFiles
+DT
