@@ -1,28 +1,9 @@
-# Import/Export Functions for dealing with Excel source files and the SQlite database
-importExcel <- function(filename, sheet = NULL, range = NA) {
-  # import excel file into object
-  wb <- loadWorkbook(filename)
-  if (is.null(sheet) &
-      length(getSheets(wb)) == 1) {
-    # if no sheet specified and only one sheet exists use that one
-    sheet <- getSheets(wb)
-  } else if (is.null(sheet) &
-             length(getSheets(wb)) > 1) {
-    # if no sheet specified and multiple exist, prompt which one
-    cat("\rMultiple worksheets found!  Please specify which one to load.")
-    sheets <- getSheets(wb)
-    
-    l <- paste0(sheets, collapse = ", ")
-    cat('\nAvailable worksheets:', l)
-    sheet <- readline(prompt = 'Specify which to use: ')
-  } # if sheet is specified that will be used.
-  if (is.na(range)) {
-    sheet <- readWorksheet(wb, sheet)
-  } else {
-    sheet <- readWorksheet(wb, sheet, region = range)
-  }
-  return(sheet)
-}
+options(java.parameters = "-Xmx4g" ) # this is only necessary when importing the Excel workbook. 
+library(XLConnect)
+library(table1xls)
+library(sqldf)
+
+
 
 exportPlot <- function(plot, filename, plotWidth=700, plotHeight=440, workbook=NA, plotLocation=NA, plotFolder='plots/') {
   if (!file.exists("plots") & plotFolder=='plots/') {
@@ -117,4 +98,33 @@ getDefs <- function(db) {
   
   return(defs)
   
+}
+
+# DEPRECATED ------------------------------------------------------------------------
+# Import/Export Functions for dealing with Excel source files and the SQlite database
+
+# Using native openxlsx functions now
+importExcel <- function(filename, sheet = NULL, range = NA) {
+  # import excel file into object
+  wb <- loadWorkbook(filename)
+  if (is.null(sheet) &
+      length(getSheets(wb)) == 1) {
+    # if no sheet specified and only one sheet exists use that one
+    sheet <- getSheets(wb)
+  } else if (is.null(sheet) &
+             length(getSheets(wb)) > 1) {
+    # if no sheet specified and multiple exist, prompt which one
+    cat("\rMultiple worksheets found!  Please specify which one to load.")
+    sheets <- getSheets(wb)
+    
+    l <- paste0(sheets, collapse = ", ")
+    cat('\nAvailable worksheets:', l)
+    sheet <- readline(prompt = 'Specify which to use: ')
+  } # if sheet is specified that will be used.
+  if (is.na(range)) {
+    sheet <- readWorksheet(wb, sheet)
+  } else {
+    sheet <- readWorksheet(wb, sheet, region = range)
+  }
+  return(sheet)
 }
