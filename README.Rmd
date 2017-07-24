@@ -19,11 +19,14 @@ The application allows for dynamic filtering and analysis of results based on us
   * [The Easier Way](#the-easier-way)
 * [Analysis](#analysis) 
   * [Summary Top Diagnoses](#summary-top-diagnoses)
-  * [Patient Visits](#patient-visits)
-  * [Patient Sex Breakdown](#patient-sex-breakdown)
-  * [Density Plots](#density-plots)
-  * [Top Prescriptions and Labs](#top-prescriptions-and-labs)
-  * [Average Labs and Prescriptions](#average-labs-and-prescriptions)
+  * [Descriptive Analysis](#descriptive-analysis)
+    * [Patient Visits](#patient-visits)
+    * [Patient Sex Breakdown](#patient-sex-breakdown)
+    * [Density Plots](#density-plots)
+    * [Top Prescriptions and Labs](#top-prescriptions-and-labs)
+    * [Average Labs and Prescriptions](#average-labs-and-prescriptions)
+  * [Inferential Analysis](#inferential-analysis)
+
 * [Dynamic Visualizations](#dynamic-visualizations)
 
 ## Cleaning Data Steps 
@@ -128,7 +131,7 @@ partially_clean %<>% cleanTimes()
 #### Count labs and prescriptions 
 ([back to top](#costing-analyzer))
 
-We wanted some aggregate counts of how many labs and prescriptions were given on a per visit basis.  *calcQuantities()* can be used to count all NA values in a set of *cols* (columns to modify) and then creates a new *col_name* in the dataframe. Remember, the dataframe is the implicit first argument for the function when using the compound assignment pipe. 
+We wanted some aggregate counts of how many labs and prescriptions were given on a per visit basis.  *calcQuantities()* can be used to count all non-NA values in a set of *cols* (columns to modify) and then creates a new *col_name* in the dataframe. Remember, the dataframe is the implicit first argument for the function when using the compound assignment pipe. 
 ```{r}
 labs <- c('lab1', 'lab2', 'lab3', 'lab4', 'lab5')
 rx <- c('rx1', 'rx2', 'rx3', 'rx4', 'rx5')
@@ -174,24 +177,31 @@ That's it for cleaning!
 ## Analysis
 ([back to top](#costing-analyzer))
 
-### Summary Top Diagnoses
+The analysis functions are designed to produce both a table and chart to describe the cleaned data set.  They can be used individually or combined with the Shiny UI.
+
+### Descriptive analysis
 ([back to top](#costing-analyzer))
 
-### Patient Visits
+#### Summary Top Diagnoses
 ([back to top](#costing-analyzer))
 
-### Patient Sex Breakdown
+#### Patient Visits
 ([back to top](#costing-analyzer))
 
-### Density Plots
+#### Patient Sex Breakdown
 ([back to top](#costing-analyzer))
 
-### Top Prescriptions and Labs
+#### Density Plots
 ([back to top](#costing-analyzer))
 
-### Average Labs and Prescriptions
+#### Top Prescriptions and Labs
 ([back to top](#costing-analyzer))
 
+#### Average Labs and Prescriptions
+([back to top](#costing-analyzer))
+
+### Inferential analysis
+([back to top](#costing-analyzer))
 
 
 ## Dynamic Visualizations
